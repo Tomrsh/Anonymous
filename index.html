@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhansu Chat App</title>
+    <meta name="description" content="A fully functional and responsive chat application using Firebase Realtime Database.">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #128C7E;
+            --secondary-color: #DCF8C6;
+            --background-color: #f0f2f5;
+            --card-background: #fff;
+            --text-color: #1a1a1a;
+            --secondary-text-color: #888;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        .container-fluid {
+            padding: 0;
+        }
+
+        .main-app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--card-background);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Top and Bottom Nav */
+        header.top-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+        header.top-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .bottom-nav {
+            background-color: var(--card-background);
+            border-top: 1px solid #ddd;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex; /* Ensure it's a flex container for alignment */
+        }
+        .nav-link {
+            flex-grow: 1;
+            text-align: center;
+            color: var(--secondary-text-color);
+            font-size: 0.85rem;
+            padding: 10px 0;
+        }
+        .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .nav-link i {
+            font-size: 1.25rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Page Container */
+        .page {
+            display: none;
+            flex-grow: 1;
+            padding-bottom: 70px; /* Space for bottom nav */
+            overflow-y: auto;
+        }
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Auth Page */
+        #auth-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: var(--background-color);
+        }
+        #auth-form {
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            background: var(--card-background);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #auth-form h2 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(18, 140, 126, 0.25);
+        }
+
+        /* Chat List & Friends List */
+        .list-group-item.chat-entry {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .list-group-item.chat-entry:hover {
+            background-color: #f5f5f5;
+        }
+        .list-group-item.chat-entry img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        /* Search & Requests List */
+        .list-group-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+        }
+        .list-group-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        /* Requests Page */
+        #requests-page .nav-pills .nav-link {
+            color: var(--primary-color);
+            background-color: #f0f2f5;
+            border: 1px solid var(--primary-color);
+            margin: 0 5px;
+        }
+        #requests-page .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Profile Page */
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        #edit-profile-btn {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+            color: var(--text-color);
+        }
+        #logout-btn {
+            background-color: #dc3545;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* Chat Page */
+        #chat-page {
+            padding: 0 !important;
+        }
+        .chat-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .chat-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .chat-header .fa-arrow-left {
+            margin-right: 15px;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        .messages-container {
+            flex-grow: 1;
+            padding: 15px;
+            padding-top: 70px;
+            padding-bottom: 70px;
+            overflow-y: auto;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-size: cover;
+        }
+        .message-bubble {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .sent {
+            background-color: var(--secondary-color);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            border-top-right-radius: 5px;
+            border-top-left-radius: 20px;
+            border-bottom-left-radius: 20px;
+        }
+        .received {
+            background-color: var(--card-background);
+            border: 1px solid #ddd;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        .message-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        .message-input-area {
+            display: flex;
+            padding: 10px 15px;
+            border-top: 1px solid #ddd;
+            background-color: #f8f9fa;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+        .message-input-area .form-control {
+            border-radius: 20px;
+            padding: 10px 15px;
+        }
+        .message-input-area .btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+        }
+        .image-preview {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <main>
+            <div id="auth-page" class="page active">
+                <form id="auth-form">
+                    <h2>Login / Sign Up</h2>
+                    <input type="email" id="email-input" class="form-control mb-3" placeholder="Email" required>
+                    <input type="password" id="password-input" class="form-control mb-3" placeholder="Password" required>
+                    <button type="button" id="login-btn" class="btn btn-primary w-100 mb-2">Login</button>
+                    <button type="button" id="signup-btn" class="btn btn-secondary w-100">Sign Up</button>
+                    <p id="auth-message" class="mt-3 text-danger"></p>
+                </form>
+            </div>
+    
+            <div id="main-app" class="main-app" style="display: none;">
+                <header class="top-header d-flex justify-content-between align-items-center">
+                    <h1 id="header-title">Chatify</h1>
+                </header>
+                
+                <section id="pages-wrapper" class="flex-grow-1 d-flex flex-column">
+                    <div id="home-page" class="page active p-0">
+                        <ul class="list-group list-group-flush" id="chat-list"></ul>
+                    </div>
+
+                    <div id="friends-page" class="page">
+                        <h2 class="px-3 pt-3">Friends</h2>
+                        <ul class="list-group list-group-flush" id="friends-list"></ul>
+                    </div>
+    
+                    <div id="search-page" class="page">
+                        <div class="p-3">
+                            <input type="text" id="search-input" class="form-control" placeholder="Search users...">
+                        </div>
+                        <ul class="list-group list-group-flush" id="search-results-list"></ul>
+                    </div>
+    
+                    <div id="requests-page" class="page">
+                        <div class="p-3">
+                            <ul class="nav nav-pills nav-fill mb-3" id="requests-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="received-tab" data-bs-toggle="pill" href="#received-requests" role="tab">Received</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="sent-tab" data-bs-toggle="pill" href="#sent-requests" role="tab">Sent</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="received-requests" role="tabpanel">
+                                    <ul class="list-group list-group-flush" id="received-requests-list"></ul>
+                                </div>
+                                <div class="tab-pane fade" id="sent-requests" role="tabpanel">
+                                    <ul class="list-group list-group-flush" id="sent-requests-list"></ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div id="profile-page" class="page text-center">
+                        <div class="profile-header mb-4">
+                            <img id="my-profile-pic" class="profile-pic mb-3" src="https://via.placeholder.com/120" alt="Profile Picture">
+                            <input type="file" id="profile-pic-input" style="display: none;" accept="image/*">
+                            <button id="edit-profile-btn" class="btn btn-outline-secondary">Edit Profile</button>
+                            <h3 id="my-profile-email" class="mt-3"></h3>
+                        </div>
+                        <button id="logout-btn" class="btn btn-danger mt-4 w-50">Logout</button>
+                    </div>
+    
+                    <div id="chat-page" class="page">
+                        <header class="chat-header">
+                            <i class="fas fa-arrow-left" id="back-to-home"></i>
+                            <img id="chat-partner-pic" src="https://via.placeholder.com/40" alt="Partner DP">
+                            <h3 id="chat-partner-name" class="flex-grow-1"></h3>
+                        </header>
+                        <div class="messages-container">
+                            <ul class="list-unstyled" id="messages-list"></ul>
+                        </div>
+                        <div class="message-input-area">
+                            <input type="text" id="message-input" class="form-control" placeholder="Message..." aria-label="Message input">
+                            <input type="file" id="image-input" style="display:none;" accept="image/*">
+                            <button id="image-btn" class="btn btn-light" aria-label="Upload image"><i class="fas fa-camera"></i></button>
+                            <button id="send-btn" class="btn btn-primary" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </section>
+    
+                <nav class="bottom-nav">
+                    <ul class="nav nav-tabs border-0 w-100">
+                        <li class="nav-item flex-grow-1">
+                            <a class="nav-link active" data-page="home-page"><i class="fas fa-home"></i><span>Chats</span></a>
+                        </li>
+                        <li class="nav-item flex-grow-1">
+                            <a class="nav-link" data-page="friends-page"><i class="fas fa-users"></i><span>Friends</span></a>
+                        </li>
+                        <li class="nav-item flex-grow-1">
+                            <a class="nav-link" data-page="search-page"><i class="fas fa-search"></i><span>Search</span></a>
+                        </li>
+                        <li class="nav-item flex-grow-1">
+                            <a class="nav-link" data-page="requests-page"><i class="fas fa-bell"></i><span>Requests</span></a>
+                        </li>
+                        <li class="nav-item flex-grow-1">
+                            <a class="nav-link" data-page="profile-page"><i class="fas fa-user"></i><span>Profile</span></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Start of JavaScript code
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgswS8AZObwKQjxZooWWJHf4b1m1rvorA",
+            authDomain: "t2upload.firebaseapp.com",
+            databaseURL: "https://t2upload-default-rtdb.firebaseio.com",
+            projectId: "t2upload"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // UI Elements
+        const authPage = document.getElementById('auth-page');
+        const mainApp = document.getElementById('main-app');
+        const homePage = document.getElementById('home-page');
+        const friendsPage = document.getElementById('friends-page');
+        const searchPage = document.getElementById('search-page');
+        const requestsPage = document.getElementById('requests-page');
+        const profilePage = document.getElementById('profile-page');
+        const chatPage = document.getElementById('chat-page');
+
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const signupBtn = document.getElementById('signup-btn');
+        const authMessage = document.getElementById('auth-message');
+
+        const chatList = document.getElementById('chat-list');
+        const friendsList = document.getElementById('friends-list');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsList = document.getElementById('search-results-list');
+        const receivedRequestsList = document.getElementById('received-requests-list');
+        const sentRequestsList = document.getElementById('sent-requests-list');
+
+        const myProfilePic = document.getElementById('my-profile-pic');
+        const profilePicInput = document.getElementById('profile-pic-input');
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const myProfileEmail = document.getElementById('my-profile-email');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const chatPartnerPic = document.getElementById('chat-partner-pic');
+        const chatPartnerName = document.getElementById('chat-partner-name');
+        const messagesList = document.getElementById('messages-list');
+        const backToHomeBtn = document.getElementById('back-to-home');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const imageInput = document.getElementById('image-input');
+        const imageBtn = document.getElementById('image-btn');
+
+        let currentChatPartner = null;
+        const defaultProfilePic = 'https://via.placeholder.com/120';
+
+        // --- Helper Functions ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            const topHeader = document.querySelector('.top-header');
+            const bottomNav = document.querySelector('.bottom-nav');
+
+            if (pageId === 'chat-page') {
+                topHeader.style.display = 'none';
+                bottomNav.style.display = 'none';
+            } else {
+                topHeader.style.display = 'flex';
+                bottomNav.style.display = 'flex';
+            }
+        }
+
+        function getChatId(uid1, uid2) {
+            return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+        }
+
+        function fileToBase64(file, callback) {
+            const reader = new FileReader();
+            reader.onloadend = () => callback(reader.result);
+            reader.readAsDataURL(file);
+        }
+
+        // --- Firebase Authentication ---
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                authPage.style.display = 'none';
+                mainApp.style.display = 'flex';
+                
+                const userRef = database.ref(`users/${user.uid}`);
+                userRef.once('value').then(snapshot => {
+                    if (!snapshot.exists()) {
+                         userRef.set({
+                            email: user.email,
+                            dpUrl: defaultProfilePic
+                        });
+                    }
+                });
+                loadHomePage();
+                loadFriendsPage();
+                loadRequests();
+                loadProfilePage();
+            } else {
+                authPage.style.display = 'flex';
+                mainApp.style.display = 'none';
+            }
+        });
+
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!email || !password) {
+                authMessage.textContent = 'Please enter both email and password.';
+                return;
+            }
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    authMessage.textContent = 'Login successful!';
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                })
+                .catch(error => authMessage.textContent = `Error: ${error.message}`);
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!email || !password) {
+                authMessage.textContent = 'Please enter both email and password.';
+                return;
+            }
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    database.ref(`users/${user.uid}`).set({
+                        email: user.email,
+                        dpUrl: defaultProfilePic
+                    });
+                    authMessage.textContent = 'Account created successfully!';
+                })
+                .catch(error => authMessage.textContent = `Error: ${error.message}`);
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    authMessage.textContent = '';
+                    chatList.innerHTML = '';
+                    friendsList.innerHTML = '';
+                    searchResultsList.innerHTML = '';
+                    receivedRequestsList.innerHTML = '';
+                    sentRequestsList.innerHTML = '';
+                    messagesList.innerHTML = '';
+                    currentChatPartner = null;
+                    showPage('auth-page');
+                })
+                .catch(error => console.error('Logout Error:', error));
+        });
+
+        // --- Navigation ---
+        document.querySelectorAll('.bottom-nav .nav-link').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.bottom-nav .nav-link').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                const pageId = item.getAttribute('data-page');
+                showPage(pageId);
+            });
+        });
+
+        backToHomeBtn.addEventListener('click', () => {
+            showPage('home-page');
+            if (currentChatPartner) {
+                const chatId = getChatId(auth.currentUser.uid, currentChatPartner.uid);
+                database.ref(`chats/${chatId}`).off('child_added');
+                currentChatPartner = null;
+            }
+        });
+
+        // --- Home Page (Chats) ---
+        function loadHomePage() {
+            loadChats();
+        }
+
+        function loadChats() {
+            const currentUserUid = auth.currentUser.uid;
+            const userChatsRef = database.ref(`users/${currentUserUid}/chats`);
+            userChatsRef.on('value', snapshot => {
+                const chats = snapshot.val();
+                chatList.innerHTML = '';
+                if (chats) {
+                    Object.keys(chats).forEach(partnerUid => {
+                        const chatEntry = document.createElement('li');
+                        chatEntry.className = 'list-group-item chat-entry';
+                        chatEntry.onclick = () => openChat(partnerUid, chats[partnerUid].email, chats[partnerUid].dpUrl);
+                        
+                        const partnerEmail = chats[partnerUid].email;
+                        const partnerDP = chats[partnerUid].dpUrl || defaultProfilePic;
+
+                        chatEntry.innerHTML = `
+                            <img src="${partnerDP}" alt="DP" class="me-3">
+                            <div class="chat-details">
+                                <h4 class="mb-0">${partnerEmail.split('@')[0]}</h4>
+                            </div>
+                        `;
+                        chatList.appendChild(chatEntry);
+                    });
+                }
+            });
+        }
+        
+        // --- Friends Page ---
+        function loadFriendsPage() {
+            const currentUserUid = auth.currentUser.uid;
+            const friendsRef = database.ref(`users/${currentUserUid}/friends`);
+            friendsRef.on('value', snapshot => {
+                const friends = snapshot.val();
+                friendsList.innerHTML = '';
+                if (friends) {
+                    Object.keys(friends).forEach(friendUid => {
+                        const friendEntry = document.createElement('li');
+                        friendEntry.className = 'list-group-item chat-entry';
+                        friendEntry.onclick = () => openChat(friendUid, friends[friendUid].email, friends[friendUid].dpUrl);
+                        
+                        const friendEmail = friends[friendUid].email;
+                        const friendDP = friends[friendUid].dpUrl || defaultProfilePic;
+                        friendEntry.innerHTML = `
+                            <img src="${friendDP}" alt="DP" class="me-3">
+                            <div class="chat-details">
+                                <h4 class="mb-0">${friendEmail.split('@')[0]}</h4>
+                            </div>
+                        `;
+                        friendsList.appendChild(friendEntry);
+                    });
+                }
+            });
+        }
+
+        // --- Search and Requests ---
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            searchResultsList.innerHTML = '';
+            if (searchTerm.length < 2) return;
+
+            database.ref('users').once('value', snapshot => {
+                const users = snapshot.val();
+                if (users) {
+                    for (let uid in users) {
+                        const userEmail = users[uid].email;
+                        if (userEmail && userEmail.toLowerCase().includes(searchTerm) && uid !== auth.currentUser.uid) {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item list-item';
+                            const dpUrl = users[uid].dpUrl || defaultProfilePic;
+                            li.innerHTML = `
+                                <div class="d-flex align-items-center">
+                                    <img src="${dpUrl}" alt="DP">
+                                    <span>${userEmail}</span>
+                                </div>
+                                <button class="btn btn-primary btn-sm" onclick="sendChatRequest('${uid}', '${userEmail}')">Send Request</button>`;
+                            searchResultsList.appendChild(li);
+                        }
+                    }
+                }
+            });
+        });
+
+        function sendChatRequest(receiverUid, receiverEmail) {
+            const senderUid = auth.currentUser.uid;
+            const senderEmail = auth.currentUser.email;
+            
+            database.ref(`users/${senderUid}/dpUrl`).once('value').then(snapshot => {
+                const senderDP = snapshot.val() || defaultProfilePic;
+                database.ref(`requests/${receiverUid}/${senderUid}`).set({ 
+                    email: senderEmail, 
+                    dpUrl: senderDP,
+                    status: 'pending' 
+                })
+                .then(() => alert('Chat request sent!'))
+                .catch(error => console.error('Error sending request:', error));
+            });
+        }
+
+        function loadRequests() {
+            loadReceivedRequests();
+            loadSentRequests();
+        }
+
+        function loadReceivedRequests() {
+            const currentUserUid = auth.currentUser.uid;
+            const requestsRef = database.ref(`requests/${currentUserUid}`);
+            requestsRef.on('value', snapshot => {
+                const requests = snapshot.val();
+                receivedRequestsList.innerHTML = '';
+                if (requests) {
+                    Object.keys(requests).forEach(senderUid => {
+                        const request = requests[senderUid];
+                        if (request && request.status === 'pending') {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item list-item';
+                            const dpUrl = request.dpUrl || defaultProfilePic;
+                            li.innerHTML = `
+                                <div class="user-info d-flex align-items-center">
+                                    <img src="${dpUrl}" alt="DP" class="me-3">
+                                    <span>${request.email}</span>
+                                </div>
+                                <button class="btn btn-success btn-sm" onclick="acceptRequest('${senderUid}')">Accept</button>
+                            `;
+                            receivedRequestsList.appendChild(li);
+                        }
+                    });
+                }
+            });
+        }
+        
+        function loadSentRequests() {
+            const currentUserUid = auth.currentUser.uid;
+            const sentRequestsRef = database.ref('requests');
+            sentRequestsRef.on('value', snapshot => {
+                const allRequests = snapshot.val();
+                sentRequestsList.innerHTML = '';
+                if (allRequests) {
+                    for (const receiverUid in allRequests) {
+                        const receivedRequests = allRequests[receiverUid];
+                        for (const senderUid in receivedRequests) {
+                            if (senderUid === currentUserUid && receivedRequests[senderUid].status === 'pending') {
+                                const request = receivedRequests[senderUid];
+                                database.ref(`users/${receiverUid}`).once('value').then(receiverSnapshot => {
+                                    const receiverData = receiverSnapshot.val();
+                                    const receiverEmail = receiverData ? receiverData.email : 'Unknown User';
+                                    const receiverDP = receiverData ? receiverData.dpUrl : defaultProfilePic;
+                                    
+                                    const li = document.createElement('li');
+                                    li.className = 'list-group-item list-item';
+                                    li.innerHTML = `
+                                        <div class="user-info d-flex align-items-center">
+                                            <img src="${receiverDP}" alt="DP" class="me-3">
+                                            <span>${receiverEmail}</span>
+                                        </div>
+                                        <span class="text-secondary">Pending</span>
+                                    `;
+                                    sentRequestsList.appendChild(li);
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function acceptRequest(senderUid) {
+            const currentUserUid = auth.currentUser.uid;
+            const myEmail = auth.currentUser.email;
+
+            database.ref(`users/${currentUserUid}`).once('value').then(mySnapshot => {
+                const myDP = mySnapshot.val()?.dpUrl || defaultProfilePic;
+
+                database.ref(`users/${senderUid}`).once('value').then(senderSnapshot => {
+                    const senderData = senderSnapshot.val();
+                    if (senderData && senderData.email) {
+                        const senderEmail = senderData.email;
+                        const senderDP = senderData.dpUrl || defaultProfilePic;
+                        
+                        // Add chat for both users
+                        database.ref(`users/${currentUserUid}/chats/${senderUid}`).set({ email: senderEmail, dpUrl: senderDP });
+                        database.ref(`users/${senderUid}/chats/${currentUserUid}`).set({ email: myEmail, dpUrl: myDP });
+
+                        // Add to friends list for both users
+                        database.ref(`users/${currentUserUid}/friends/${senderUid}`).set({ email: senderEmail, dpUrl: senderDP });
+                        database.ref(`users/${senderUid}/friends/${currentUserUid}`).set({ email: myEmail, dpUrl: myDP });
+                        
+                        // Remove the request
+                        database.ref(`requests/${currentUserUid}/${senderUid}`).remove();
+                        
+                        alert('Request accepted! You can now chat.');
+                    } else {
+                        console.error('Sender data not found.');
+                    }
+                });
+            }).catch(error => console.error('Error accepting request:', error));
+        }
+
+        // --- Profile Page ---
+        editProfileBtn.addEventListener('click', () => profilePicInput.click());
+
+        profilePicInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            fileToBase64(file, base64String => {
+                const user = auth.currentUser;
+                database.ref(`users/${user.uid}/dpUrl`).set(base64String)
+                    .then(() => {
+                        myProfilePic.src = base64String;
+                        alert('Profile picture updated successfully!');
+                    })
+                    .catch(error => console.error('Error updating profile picture:', error));
+            });
+        });
+
+        function loadProfilePage() {
+            const user = auth.currentUser;
+            if (user) {
+                myProfileEmail.textContent = user.email;
+                database.ref(`users/${user.uid}/dpUrl`).once('value', snapshot => {
+                    myProfilePic.src = snapshot.val() || defaultProfilePic;
+                });
+            }
+        }
+
+        // --- Chat Window ---
+        function openChat(partnerUid, partnerEmail, partnerDP) {
+            currentChatPartner = { uid: partnerUid, email: partnerEmail, dpUrl: partnerDP };
+            showPage('chat-page');
+            
+            chatPartnerName.textContent = partnerEmail.split('@')[0];
+            chatPartnerPic.src = partnerDP || defaultProfilePic;
+            
+            messagesList.innerHTML = '';
+            const chatId = getChatId(auth.currentUser.uid, partnerUid);
+            const chatRef = database.ref(`chats/${chatId}`);
+            chatRef.on('child_added', snapshot => {
+                const message = snapshot.val();
+                displayMessage(message);
+            });
+        }
+
+        function displayMessage(message) {
+            const li = document.createElement('li');
+            li.className = `message-bubble ${message.sender === auth.currentUser.uid ? 'sent' : 'received'}`;
+            
+            if (message.type === 'text') {
+                li.textContent = message.text;
+            } else if (message.type === 'image') {
+                const img = document.createElement('img');
+                img.src = message.imageData;
+                img.className = 'message-image img-fluid';
+                li.appendChild(img);
+            }
+            
+            const messageTime = document.createElement('small');
+            messageTime.className = 'message-time d-block text-muted mt-1';
+            const date = new Date(message.timestamp);
+            messageTime.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            li.appendChild(messageTime);
+            
+            messagesList.appendChild(li);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+
+        sendBtn.addEventListener('click', () => {
+            const messageText = messageInput.value.trim();
+            if (messageText && currentChatPartner) {
+                sendMessage({
+                    type: 'text',
+                    text: messageText,
+                    sender: auth.currentUser.uid,
+                    receiver: currentChatPartner.uid,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                messageInput.value = '';
+            }
+        });
+
+        imageBtn.addEventListener('click', () => imageInput.click());
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file || !currentChatPartner) return;
+            
+            fileToBase64(file, base64String => {
+                sendMessage({
+                    type: 'image',
+                    imageData: base64String,
+                    sender: auth.currentUser.uid,
+                    receiver: currentChatPartner.uid,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+            });
+        });
+
+        function sendMessage(message) {
+            const currentUserUid = auth.currentUser.uid;
+            const chatId = getChatId(currentUserUid, currentChatPartner.uid);
+
+            database.ref(`chats/${chatId}`).push(message)
+                .then(() => {
+                    const myDP = myProfilePic.src;
+                    database.ref(`users/${currentUserUid}/chats/${currentChatPartner.uid}`).set({
+                        email: currentChatPartner.email,
+                        dpUrl: currentChatPartner.dpUrl
+                    });
+                    database.ref(`users/${currentChatPartner.uid}/chats/${currentUserUid}`).set({
+                        email: auth.currentUser.email,
+                        dpUrl: myDP
+                    });
+                })
+                .catch(error => console.error("Error sending message:", error));
+        }
+    </script>
+</body>
+</html>

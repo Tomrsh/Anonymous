@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calls - Chat App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #7E57C2;
+            --primary-light: #b085f5;
+            --primary-dark: #4d2c91;
+            --secondary-color: #FF4081;
+            --success-color: #4CAF50;
+            --background-color: #f5f7fb;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --light-text-color: #666666;
+            --lighter-text-color: #888888;
+            --border-color: #e0e0e0;
+            --hover-effect: rgba(126, 87, 194, 0.08);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+            --incoming-call: #4CAF50;
+            --outgoing-call: #2196F3;
+            --missed-call: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+        }
+
+        .nav-brand i {
+            margin-right: 0.5rem;
+            font-size: 1.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .navbar a {
+            color: var(--light-text-color);
+            text-decoration: none;
+            padding: 0.6rem 1rem;
+            font-weight: 500;
+            border-radius: 50px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .navbar a i {
+            font-size: 1.1rem;
+        }
+
+        .navbar a.active, .navbar a:hover {
+            background-color: var(--hover-effect);
+            color: var(--primary-color);
+        }
+
+        #logout-btn {
+            color: var(--secondary-color);
+        }
+
+        #logout-btn:hover {
+            background-color: rgba(255, 64, 129, 0.08);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            width: 100%;
+        }
+
+        .main-content h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .call-history-container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .call-filters {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1.2rem;
+            background-color: #f5f5f5;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        #call-history-list {
+            list-style-type: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .call-entry {
+            background-color: var(--card-background);
+            padding: 1.2rem 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        .call-entry:hover {
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .call-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .call-details {
+            flex: 1;
+        }
+
+        .call-user {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+
+        .call-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.9rem;
+            color: var(--light-text-color);
+        }
+
+        .call-type {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .call-status {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .status-incoming {
+            color: var(--incoming-call);
+        }
+
+        .status-outgoing {
+            color: var(--outgoing-call);
+        }
+
+        .status-missed {
+            color: var(--missed-call);
+        }
+
+        .call-date {
+            margin-left: auto;
+            font-size: 0.85rem;
+            color: var(--lighter-text-color);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .call-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .call-action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--hover-effect);
+            color: var(--primary-color);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .call-action-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--light-text-color);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: #e0e0e0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .call-entry {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .nav-links {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+                padding: 0.5rem 0;
+                margin-top: 0.5rem;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            
+            .nav-links::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+            
+            .call-entry {
+                padding: 1rem;
+            }
+            
+            .call-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.3rem;
+            }
+            
+            .call-date {
+                margin-left: 0;
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .nav-brand {
+                margin-bottom: 0.5rem;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .navbar a {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .navbar a span {
+                display: none;
+            }
+            
+            .navbar a i {
+                font-size: 1.3rem;
+                margin-right: 0;
+            }
+            
+            .call-entry {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.8rem;
+            }
+            
+            .call-actions {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+            
+            .call-date {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-comment-dots"></i>
+            <span>ChatApp</span>
+        </div>
+        <div class="nav-links">
+            <a href="home_test.html"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a href="chats_test.html"><i class="fas fa-comments"></i> <span>Chats</span></a>
+            <a href="requests_test.html"><i class="fas fa-user-friends"></i> <span>Requests</span></a>
+            <a href="calls_test.html" class="active"><i class="fas fa-phone"></i> <span>Calls</span></a>
+            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <h2>Call History</h2>
+        
+        <div class="call-history-container">
+            <div class="call-filters">
+                <button class="filter-btn active">
+                    <i class="fas fa-filter"></i> All Calls
+                </button>
+                <button class="filter-btn">
+                    <i class="fas fa-phone"></i> Voice
+                </button>
+                <button class="filter-btn">
+                    <i class="fas fa-video"></i> Video
+                </button>
+                <button class="filter-btn">
+                    <i class="fas fa-history"></i> Recent
+                </button>
+            </div>
+            
+            <ul id="call-history-list">
+                <li class="empty-state">
+                    <i class="fas fa-phone"></i>
+                    <p>Your call history will appear here</p>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAyx04GN-5MsBSztE2TQ4zViMs81iCFI8",
+            authDomain: "trext-91b51.firebaseapp.com",
+            databaseURL: "https://trext-91b51-default-rtdb.firebaseio.com",
+            projectId: "trext-91b51",
+            storageBucket: "trext-91b51.firebasestorage.app",
+            messagingSenderId: "396150208973",
+            appId: "1:396150208973:web:1e6ca3f5ce9fed7a5cec84",
+            measurementId: "G-VVVKCLZYEE"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const callHistoryList = document.getElementById('call-history-list');
+        const logoutBtn = document.getElementById('logout-btn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        let currentUser;
+
+        // User authentication check
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                listenForCallHistory();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout failed:', error);
+            });
+        });
+
+        // Filter buttons functionality
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                // Here you would implement the actual filtering
+            });
+        });
+
+        // Listen for the call history for the current user
+        function listenForCallHistory() {
+            const callsRef = database.ref(`calls/${currentUser.uid}`);
+            
+            // 'child_added' listener is more efficient for chat/call logs
+            callsRef.on('child_added', (snapshot) => {
+                const call = snapshot.val();
+                displayCallEntry(call);
+            });
+        }
+
+        // Display a single call entry
+        function displayCallEntry(call) {
+            // Remove empty state if it exists
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            // Get the other user's username
+            database.ref(`users/${call.participantId}`).once('value', (snapshot) => {
+                const participant = snapshot.val();
+                
+                let status = '';
+                let statusClass = '';
+                if (call.callerId === currentUser.uid) {
+                    // Current user is the caller
+                    status = 'Outgoing';
+                    statusClass = 'status-outgoing';
+                } else {
+                    // Current user is the receiver
+                    status = call.status === 'completed' ? 'Incoming' : 'Missed';
+                    statusClass = call.status === 'completed' ? 'status-incoming' : 'status-missed';
+                }
+
+                const formattedDate = formatDate(new Date(call.timestamp));
+                const userInitial = participant.username ? participant.username.charAt(0).toUpperCase() : 'U';
+                
+                const li = document.createElement('li');
+                li.classList.add('call-entry');
+                li.innerHTML = `
+                    <div class="call-avatar">${userInitial}</div>
+                    <div class="call-details">
+                        <div class="call-user">${participant.username}</div>
+                        <div class="call-info">
+                            <span class="call-type">
+                                <i class="fas ${call.type === 'video' ? 'fa-video' : 'fa-phone'}"></i>
+                                ${call.type === 'video' ? 'Video' : 'Voice'}
+                            </span>
+                            <span class="call-status ${statusClass}">
+                                <i class="fas ${status === 'Missed' ? 'fa-times-circle' : 'fa-check-circle'}"></i>
+                                ${status}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="call-date">${formattedDate}</div>
+                    <div class="call-actions">
+                        <button class="call-action-btn" title="Call back">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="call-action-btn" title="Video call">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
+                `;
+                
+                // Add the new call entry to the beginning of the list
+                if (callHistoryList.firstChild) {
+                    callHistoryList.insertBefore(li, callHistoryList.firstChild);
+                } else {
+                    callHistoryList.appendChild(li);
+                }
+
+                // Add event listeners to action buttons
+                const callBtn = li.querySelector('.call-action-btn:first-child');
+                const videoCallBtn = li.querySelector('.call-action-btn:last-child');
+                
+                callBtn.addEventListener('click', () => {
+                    initiateCall(participant.uid, 'voice');
+                });
+                
+                videoCallBtn.addEventListener('click', () => {
+                    initiateCall(participant.uid, 'video');
+                });
+            });
+        }
+
+        // Format date to relative time or specific format
+        function formatDate(date) {
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return 'Today, ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (diffDays === 1) {
+                return 'Yesterday, ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (diffDays < 7) {
+                return date.toLocaleDateString([], {weekday: 'short', hour: '2-digit', minute:'2-digit'});
+            } else {
+                return date.toLocaleDateString([], {year: 'numeric', month: 'short', day: 'numeric'});
+            }
+        }
+
+        // Initiate call function
+        function initiateCall(calleeId, type) {
+            const callData = {
+                callerId: currentUser.uid,
+                callerName: currentUser.displayName || 'Unknown',
+                type,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                status: 'ringing'
+            };
+
+            const callRef = database.ref(`calls/${calleeId}`).push();
+            const callKey = callRef.key;
+
+            callRef.set(callData).then(() => {
+                // Open call window
+                const url = `call.html?friendId=${calleeId}&type=${type}`;
+                window.open(url, '_blank', 'noopener,noreferrer');
+            });
+        }
+    </script>
+</body>
+</html>

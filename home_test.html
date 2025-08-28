@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Chat App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #7E57C2;
+            --primary-light: #b085f5;
+            --primary-dark: #4d2c91;
+            --secondary-color: #FF4081;
+            --background-color: #f5f7fb;
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --light-text-color: #666666;
+            --lighter-text-color: #888888;
+            --border-color: #e0e0e0;
+            --hover-effect: rgba(126, 87, 194, 0.08);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: var(--card-background);
+            box-shadow: var(--shadow);
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+        }
+
+        .nav-brand i {
+            margin-right: 0.5rem;
+            font-size: 1.6rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .navbar a {
+            color: var(--light-text-color);
+            text-decoration: none;
+            padding: 0.6rem 1rem;
+            font-weight: 500;
+            border-radius: 50px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .navbar a i {
+            font-size: 1.1rem;
+        }
+
+        .navbar a.active, .navbar a:hover {
+            background-color: var(--hover-effect);
+            color: var(--primary-color);
+        }
+
+        #logout-btn {
+            color: var(--secondary-color);
+        }
+
+        #logout-btn:hover {
+            background-color: rgba(255, 64, 129, 0.08);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            width: 100%;
+        }
+
+        .welcome-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .welcome-container h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+
+        .welcome-container p {
+            color: var(--light-text-color);
+            font-size: 1.1rem;
+        }
+
+        .search-container {
+            background-color: var(--card-background);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 600px;
+            transition: var(--transition);
+        }
+
+        .search-container:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--lighter-text-color);
+        }
+
+        #user-search {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: #f9f9f9;
+        }
+
+        #user-search:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.2);
+            background-color: #fff;
+        }
+
+        #user-list {
+            list-style-type: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #user-list li {
+            background-color: #f9f9f9;
+            padding: 1rem 1.5rem;
+            margin-bottom: 0.75rem;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+
+        #user-list li:hover {
+            background-color: #fff;
+            border-color: var(--border-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .follow-btn {
+            padding: 0.6rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .follow-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(126, 87, 194, 0.3);
+        }
+
+        .follow-btn:disabled {
+            background-color: var(--light-text-color);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--light-text-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #e0e0e0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .nav-links {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+                padding: 0.5rem 0;
+                margin-top: 0.5rem;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            
+            .nav-links::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .main-content {
+                padding: 1.5rem 1rem;
+            }
+            
+            .search-container {
+                padding: 1.5rem;
+            }
+            
+            .welcome-container h2 {
+                font-size: 1.5rem;
+            }
+            
+            #user-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-actions {
+                align-self: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .nav-brand {
+                margin-bottom: 0.5rem;
+            }
+            
+            .nav-links {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .navbar a {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .navbar a span {
+                display: none;
+            }
+            
+            .navbar a i {
+                font-size: 1.3rem;
+                margin-right: 0;
+            }
+            
+            .welcome-container h2 {
+                font-size: 1.3rem;
+            }
+            
+            .search-container {
+                padding: 1.2rem;
+            }
+        }
+
+        /* Animation for user list items */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #user-list li {
+            animation: fadeIn 0.3s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-comment-dots"></i>
+            <span>ChatApp</span>
+        </div>
+        <div class="nav-links">
+            <a href="home_test.html" class="active"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a href="chats_test.html"><i class="fas fa-comments"></i> <span>Chats</span></a>
+            <a href="requests_test.html"><i class="fas fa-user-friends"></i> <span>Requests</span></a>
+            <a href="calls_test.html"><i class="fas fa-phone"></i> <span>Calls</span></a>
+            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="welcome-container">
+            <h2>Welcome <span id="current-username"></span>!</h2>
+            <p>Connect with friends and start conversations</p>
+        </div>
+        
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="user-search" placeholder="Search for users...">
+            </div>
+            <ul id="user-list">
+                <li class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>Start typing to search for users</p>
+                </li>
+            </ul>
+        </div>
+    </main>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAyx04GN-5MsBSztE2TQ4zViMs81iCFI8",
+            authDomain: "trext-91b51.firebaseapp.com",
+            databaseURL: "https://trext-91b51-default-rtdb.firebaseio.com",
+            projectId: "trext-91b51",
+            storageBucket: "trext-91b51.firebasestorage.app",
+            messagingSenderId: "396150208973",
+            appId: "1:396150208973:web:1e6ca3f5ce9fed7a5cec84",
+            measurementId: "G-VVVKCLZYEE"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        const userSearchInput = document.getElementById('user-search');
+        const userList = document.getElementById('user-list');
+        const logoutBtn = document.getElementById('logout-btn');
+        const currentUsernameSpan = document.getElementById('current-username');
+
+        let currentUser;
+
+        // Check if user is logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                currentUsernameSpan.textContent = user.displayName || 'User';
+                
+                // Get user's first initial for avatar
+                const userInitial = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+                
+                // Update UI with user info if needed
+            } else {
+                // If not logged in, redirect to login page
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.href = 'index.html';
+            }).catch((error) => {
+                console.error('Logout failed:', error);
+            });
+        });
+
+        // Search for users
+        userSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            
+            // Clear previous results
+            if (searchTerm.length === 0) {
+                userList.innerHTML = '<li class="empty-state"><i class="fas fa-search"></i><p>Start typing to search for users</p></li>';
+                return;
+            }
+            
+            if (searchTerm.length > 2) {
+                userList.innerHTML = '<li class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Searching users...</p></li>';
+                
+                // Search users in the database
+                database.ref('users').once('value', (snapshot) => {
+                    userList.innerHTML = '';
+                    
+                    if (!snapshot.exists()) {
+                        userList.innerHTML = '<li class="empty-state"><i class="fas fa-users"></i><p>No users found</p></li>';
+                        return;
+                    }
+                    
+                    let usersFound = false;
+                    
+                    snapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        const userId = childSnapshot.key;
+
+                        if (userId !== currentUser.uid && user.username.toLowerCase().includes(searchTerm)) {
+                            usersFound = true;
+                            const userInitial = user.username.charAt(0).toUpperCase();
+                            
+                            const li = document.createElement('li');
+                            li.innerHTML = `
+                                <div class="user-info">
+                                    <div class="user-avatar">${userInitial}</div>
+                                    <span>${user.username}</span>
+                                </div>
+                                <div class="user-actions">
+                                    <button class="follow-btn" data-user-id="${userId}">
+                                        <i class="fas fa-user-plus"></i> Follow
+                                    </button>
+                                </div>
+                            `;
+                            userList.appendChild(li);
+                        }
+                    });
+                    
+                    if (!usersFound) {
+                        userList.innerHTML = '<li class="empty-state"><i class="fas fa-users"></i><p>No users found</p></li>';
+                    }
+                }).catch((error) => {
+                    console.error('Error searching users:', error);
+                    userList.innerHTML = '<li class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error searching users</p></li>';
+                });
+            }
+        });
+
+        // Handle follow button clicks
+        userList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('follow-btn') || e.target.parentElement.classList.contains('follow-btn')) {
+                const followBtn = e.target.classList.contains('follow-btn') ? e.target : e.target.parentElement;
+                const targetUserId = followBtn.dataset.userId;
+
+                // Save a follow request to the database
+                database.ref(`followRequests/${targetUserId}/${currentUser.uid}`).set({
+                    senderUsername: currentUser.displayName,
+                    timestamp: new Date().toISOString(),
+                    status: 'pending'
+                }).then(() => {
+                    followBtn.innerHTML = '<i class="fas fa-clock"></i> Requested';
+                    followBtn.disabled = true;
+                    
+                    // Show a subtle notification instead of alert
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        right: 20px;
+                        background-color: var(--primary-color);
+                        color: white;
+                        padding: 12px 20px;
+                        border-radius: 8px;
+                        box-shadow: var(--shadow-hover);
+                        z-index: 1000;
+                        animation: fadeIn 0.3s ease;
+                    `;
+                    notification.textContent = 'Follow request sent!';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
+                }).catch((error) => {
+                    console.error('Error sending request:', error);
+                    
+                    // Show error notification
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        right: 20px;
+                        background-color: var(--secondary-color);
+                        color: white;
+                        padding: 12px 20px;
+                        border-radius: 8px;
+                        box-shadow: var(--shadow-hover);
+                        z-index: 1000;
+                        animation: fadeIn 0.3s ease;
+                    `;
+                    notification.textContent = 'Error sending request';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 3000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

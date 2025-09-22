@@ -1,535 +1,339 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trext - Login</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --background-color: #f8f9fa;
-            --card-background: rgba(255, 255, 255, 0.95);
-            --text-color: #343a40;
-            --light-text-color: #6c757d;
-            --border-color: rgba(108, 117, 125, 0.2);
-            --shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            --border-radius: 16px;
-            --transition: all 0.3s ease;
-        }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ultra Light Chat (Slow Network Friendly)</title>
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--primary-gradient);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        /* Animated background elements */
-        .bg-bubbles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .bg-bubbles li {
-            position: absolute;
-            list-style: none;
-            display: block;
-            width: 40px;
-            height: 40px;
-            background-color: rgba(255, 255, 255, 0.15);
-            bottom: -160px;
-            border-radius: 50%;
-            animation: square 25s infinite;
-            transition-timing-function: linear;
-        }
-
-        .bg-bubbles li:nth-child(1) {
-            left: 10%;
-            animation-delay: 0s;
-            width: 80px;
-            height: 80px;
-        }
-
-        .bg-bubbles li:nth-child(2) {
-            left: 20%;
-            animation-delay: 2s;
-            animation-duration: 17s;
-            width: 60px;
-            height: 60px;
-        }
-
-        .bg-bubbles li:nth-child(3) {
-            left: 25%;
-            animation-delay: 4s;
-        }
-
-        .bg-bubbles li:nth-child(4) {
-            left: 40%;
-            animation-delay: 0s;
-            animation-duration: 22s;
-            width: 70px;
-            height: 70px;
-        }
-
-        .bg-bubbles li:nth-child(5) {
-            left: 70%;
-            animation-delay: 3s;
-        }
-
-        .bg-bubbles li:nth-child(6) {
-            left: 80%;
-            animation-delay: 2s;
-            width: 90px;
-            height: 90px;
-        }
-
-        .bg-bubbles li:nth-child(7) {
-            left: 32%;
-            animation-delay: 6s;
-            width: 50px;
-            height: 50px;
-        }
-
-        .bg-bubbles li:nth-child(8) {
-            left: 55%;
-            animation-delay: 8s;
-            animation-duration: 18s;
-            width: 45px;
-            height: 45px;
-        }
-
-        .bg-bubbles li:nth-child(9) {
-            left: 25%;
-            animation-delay: 9s;
-            animation-duration: 20s;
-            width: 30px;
-            height: 30px;
-        }
-
-        .bg-bubbles li:nth-child(10) {
-            left: 85%;
-            animation-delay: 11s;
-            width: 55px;
-            height: 55px;
-        }
-
-        @keyframes square {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-                border-radius: 50%;
-            }
-            100% {
-                transform: translateY(-1000px) rotate(720deg);
-                opacity: 0;
-                border-radius: 50%;
-            }
-        }
-
-        .auth-container {
-            background-color: var(--card-background);
-            padding: 2.5rem;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .auth-container:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .logo {
-            margin-bottom: 1.5rem;
-            color: var(--text-color);
-            font-size: 2.2rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .logo i {
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-right: 10px;
-            font-size: 2.5rem;
-        }
-
-        h2 {
-            color: var(--text-color);
-            margin-top: 0;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-            font-size: 1.8rem;
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .input-group {
-            position: relative;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: rgba(248, 249, 250, 0.8);
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--light-text-color);
-            font-size: 1.1rem;
-        }
-
-        button {
-            padding: 1rem 1.5rem;
-            border: none;
-            border-radius: var(--border-radius);
-            background: var(--primary-gradient);
-            color: white;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: var(--transition);
-            margin-top: 0.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(255, 255, 255, 0.2), transparent);
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-
-        button:hover::before {
-            transform: translateY(0);
-        }
-
-        p {
-            margin-top: 1.5rem;
-            font-size: 0.95rem;
-            color: var(--light-text-color);
-        }
-
-        a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        a:hover {
-            color: #764ba2;
-        }
-
-        a::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: #667eea;
-            transition: width 0.3s ease;
-        }
-
-        a:hover::after {
-            width: 100%;
-        }
-
-        .social-login {
-            margin: 1.5rem 0;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .social-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f8f9fa;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .social-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .social-btn i {
-            color: var(--light-text-color);
-            font-size: 1.2rem;
-        }
-
-        .social-btn.google:hover {
-            background: #DB4437;
-        }
-
-        .social-btn.google:hover i {
-            color: white;
-        }
-
-        .social-btn.facebook:hover {
-            background: #4267B2;
-        }
-
-        .social-btn.facebook:hover i {
-            color: white;
-        }
-
-        .social-btn.twitter:hover {
-            background: #1DA1F2;
-        }
-
-        .social-btn.twitter:hover i {
-            color: white;
-        }
-
-        /* Form switching animation */
-        #signup-form-container, #login-form-container {
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-
-        .hidden {
-            opacity: 0;
-            transform: translateX(30px);
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 2.5rem;
-        }
-
-        .visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        /* Responsive styles */
-        @media (max-width: 576px) {
-            .auth-container {
-                padding: 1.8rem;
-            }
-            
-            .hidden {
-                padding: 1.8rem;
-            }
-            
-            h2 {
-                font-size: 1.5rem;
-            }
-            
-            input[type="text"],
-            input[type="email"],
-            input[type="password"] {
-                padding: 0.8rem 0.8rem 0.8rem 2.8rem;
-            }
-            
-            .logo {
-                font-size: 1.8rem;
-            }
-            
-            .logo i {
-                font-size: 2rem;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .auth-container {
-                padding: 1.5rem;
-            }
-            
-            .hidden {
-                padding: 1.5rem;
-            }
-            
-            .social-login {
-                gap: 0.7rem;
-            }
-            
-            .social-btn {
-                width: 40px;
-                height: 40px;
-            }
-        }
-    </style>
+<!-- Basic styling (mobile friendly) -->
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8; --ok:#34d399;
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",sans-serif;background:linear-gradient(180deg,#071023 0%,#071a2b 100%);color:#e6eef6}
+  .app{max-width:720px;margin:12px auto;padding:12px}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .brand{font-weight:700;font-size:18px;color:var(--accent)}
+  .status{font-size:13px;color:var(--muted);margin-left:auto}
+  .card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;box-shadow:0 6px 16px rgba(2,6,23,0.6)}
+  .chats{height:60vh; overflow:auto; padding:10px; display:flex;flex-direction:column; gap:8px; margin:10px 0;}
+  .msg{max-width:78%; padding:8px 10px;border-radius:10px;line-height:1.2; font-size:15px;}
+  .mine{align-self:flex-end;background:linear-gradient(180deg,#063b3f,#045c63); color:white;border-bottom-right-radius:2px}
+  .other{align-self:flex-start;background:rgba(255,255,255,0.03); color: #e6eef6}
+  .meta{font-size:11px;color:var(--muted);margin-top:4px}
+  .inputbar{display:flex;gap:8px;align-items:center}
+  input[type="text"],button{padding:10px;border-radius:10px;border:0;background:rgba(255,255,255,0.03);color:inherit;outline:none}
+  input[type="text"]{flex:1}
+  button{min-width:48px;cursor:pointer}
+  .small{font-size:12px;color:var(--muted)}
+  .pending{opacity:0.7;font-size:12px;margin-left:6px}
+  .clock{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--muted);box-sizing:border-box}
+  .tick{display:inline-block;width:12px;height:12px;background:var(--ok);border-radius:2px}
+  .user-setup{display:flex;gap:8px;align-items:center; margin-bottom:10px}
+  .btn-link{background:transparent;color:var(--accent);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  @media (max-width:420px){ .chats{height:56vh} }
+</style>
 </head>
 <body>
-    <ul class="bg-bubbles">
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-        <li></li>
-    </ul>
+<div class="app">
+  <div class="top">
+    <div class="brand">⚡ LiteChat</div>
+    <div class="status" id="netStatus">Checking network...</div>
+  </div>
 
-    <div class="auth-container">
-        <div class="logo">
-            <i class="fas fa-comments"></i>
-            <span>Trext</span>
-        </div>
-        
-        <div id="signup-form-container" class="visible">
-            <h2>Create Account</h2>
-            <form id="signup-form">
-                <div class="input-group">
-                    <i class="input-icon fas fa-user"></i>
-                    <input type="text" id="signup-username" placeholder="Username" required>
-                </div>
-                <div class="input-group">
-                    <i class="input-icon fas fa-envelope"></i>
-                    <input type="email" id="signup-email" placeholder="Email" required>
-                </div>
-                <div class="input-group">
-                    <i class="input-icon fas fa-lock"></i>
-                    <input type="password" id="signup-password" placeholder="Password" required>
-                </div>
-                <button type="submit">Sign Up</button>
-            </form>
-            
-            <div class="social-login">
-                <div class="social-btn google">
-                    <i class="fab fa-google"></i>
-                </div>
-                <div class="social-btn facebook">
-                    <i class="fab fa-facebook-f"></i>
-                </div>
-                <div class="social-btn twitter">
-                    <i class="fab fa-twitter"></i>
-                </div>
-            </div>
-            
-            <p>Already have an account? <a href="#" id="show-login">Login</a></p>
-        </div>
-        
-        <div id="login-form-container" class="hidden">
-            <h2>Welcome Back</h2>
-            <form id="login-form">
-                <div class="input-group">
-                    <i class="input-icon fas fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="Email" required>
-                </div>
-                <div class="input-group">
-                    <i class="input-icon fas fa-lock"></i>
-                    <input type="password" id="login-password" placeholder="Password" required>
-                </div>
-                <button type="submit">Login</button>
-            </form>
-            
-            <div class="social-login">
-                <div class="social-btn google">
-                    <i class="fab fa-google"></i>
-                </div>
-                <div class="social-btn facebook">
-                    <i class="fab fa-facebook-f"></i>
-                </div>
-                <div class="social-btn twitter">
-                    <i class="fab fa-twitter"></i>
-                </div>
-            </div>
-            
-            <p>Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
-        </div>
+  <div class="card">
+    <div id="setupArea" class="user-setup">
+      <input id="inputName" type="text" placeholder="Enter your name (displayed to others)" />
+      <button id="btnJoin" class="btn-link">Join Chat</button>
+      <div style="margin-left:auto"><button id="btnClearLocal" class="btn-link">Clear Local Queue</button></div>
     </div>
-    
-    <script>
-        // Form switching functionality
-        document.getElementById('show-login').addEventListener('click', function(e) {
-            e.preventDefault();
-           document.getElementById('signup-form-container').classList.remove('visible');
-            document.getElementById('signup-form-container').classList.add('hidden');
-            document.getElementById('login-form-container').classList.remove('hidden');
-            document.getElementById('login-form-container').classList.add('visible');
-        });
 
-        document.getElementById('show-signup').addEventListener('click', function(e) {
-            e.preventDefault();
-            document.getElementById('login-form-container').classList.remove('visible');
-            document.getElementById('login-form-container').classList.add('hidden');
-            document.getElementById('signup-form-container').classList.remove('hidden');
-            document.getElementById('signup-form-container').classList.add('visible');
-        });
+    <div id="chatArea" style="display:none">
+      <div class="chats" id="chats"></div>
 
+      <div class="inputbar">
+        <input id="txtMsg" type="text" placeholder="Type message (text only) — small payloads work best" />
+        <button id="btnSend">Send</button>
+      </div>
+      <div class="hint small">Optimized for slow networks. Messages queued locally when offline.</div>
+    </div>
+  </div>
+</div>
 
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="auth.js"></script>
+<!-- External libs: Firebase (compat) + LZString for compression (optional small) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
+<script>
+/*
+  IMPORTANT:
+  Replace firebaseConfig below with your Firebase project's config object.
+  You can get it from Firebase Console -> Project Settings -> SDK setup.
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyA3yJFkZO0gu-oEto3z4ZeqwN-rHxVn9-4",
+  authDomain: "user-s-login-6260a.firebaseapp.com",
+  databaseURL: "https://user-s-login-6260a-default-rtdb.firebaseio.com",
+  projectId: "user-s-login-6260a",
+  storageBucket: "user-s-login-6260a.firebasestorage.app",
+  messagingSenderId: "896227638466",
+  appId: "1:896227638466:web:d5bbf34936682dd4a70f5b",
+  measurementId: "G-0HERWKBQ5Y"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// ---------- App constants ----------
+const CHAT_NODE = "litechat/messages"; // keep it short to reduce bandwidth
+const MAX_MESSAGES = 100; // limit to last 100 messages to reduce data
+
+// ---------- Local queue (localStorage) ----------
+const QUEUE_KEY = "litechat_queue_v1";
+function loadQueue(){ try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||"[]"); } catch(e){ return []; } }
+function saveQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+function pushToQueue(msgObj){ const q=loadQueue(); q.push(msgObj); saveQueue(q); }
+function popFrontQueue(){ const q=loadQueue(); if(q.length===0) return null; const first=q.shift(); saveQueue(q); return first; }
+function clearQueue(){ localStorage.removeItem(QUEUE_KEY); }
+
+// ---------- Network status ----------
+const netStatusEl = document.getElementById("netStatus");
+function updateNetworkUI(){
+  netStatusEl.textContent = navigator.onLine ? "Online" : "Offline";
+}
+window.addEventListener("online", () => { updateNetworkUI(); tryFlushQueue(); });
+window.addEventListener("offline", updateNetworkUI);
+updateNetworkUI();
+
+// ---------- UI refs ----------
+const setupArea = document.getElementById("setupArea");
+const chatArea = document.getElementById("chatArea");
+const inputName = document.getElementById("inputName");
+const btnJoin = document.getElementById("btnJoin");
+const btnClearLocal = document.getElementById("btnClearLocal");
+const chatsEl = document.getElementById("chats");
+const txtMsg = document.getElementById("txtMsg");
+const btnSend = document.getElementById("btnSend");
+
+// ---------- Utility: small payload + compress ----------
+function makePayload(name, text){
+  // short keys: t = ts, u = user, m = message
+  const payload = {
+    t: Date.now(),
+    u: name.slice(0,24), // cap length
+    m: LZString.compressToUTF16(text) // compress message to reduce bytes (works well for repetitive/long text)
+  };
+  return payload;
+}
+function decompressPayload(payload){
+  return {
+    t: payload.t,
+    u: payload.u,
+    m: (payload.m ? LZString.decompressFromUTF16(payload.m) : "")
+  };
+}
+
+// ---------- Auth & join ----------
+let currentUser = null;
+let displayName = "";
+
+btnJoin.onclick = async () => {
+  const name = (inputName.value||"").trim();
+  if(!name){ alert("Please enter a name"); inputName.focus(); return; }
+  displayName = name.slice(0,24);
+  // Sign in anonymously to use Firebase safely
+  try {
+    const result = await auth.signInAnonymously();
+    currentUser = result.user;
+    setupArea.style.display = "none";
+    chatArea.style.display = "block";
+    initChatListeners();
+    // Try flush queue immediately
+    tryFlushQueue();
+    // focus input
+    txtMsg.focus();
+  } catch(err){
+    console.error("Auth error:",err);
+    alert("Unable to sign in. Check Firebase config and network.");
+  }
+};
+
+// Clear local queue (dev helper)
+btnClearLocal.onclick = () => { if(confirm("Clear local unsent message queue?")){ clearQueue(); alert("Local queue cleared"); } };
+
+// ---------- Send message flow ----------
+function renderMessageLocally(obj, opts={}) {
+  // obj has t, u, m (compressed)
+  const d = decompressPayload(obj);
+  const isMine = (d.u === displayName);
+  const wrapper = document.createElement("div");
+  wrapper.className = "msg " + (isMine ? "mine" : "other");
+  wrapper.innerHTML = `<div>${escapeHtml(d.m)}</div>
+    <div class="meta">${d.u} • ${new Date(d.t).toLocaleTimeString()}</div>`;
+  if(opts.pending){
+    const pend = document.createElement("span");
+    pend.className = "pending";
+    pend.title = "Pending (will be delivered when network available)";
+    pend.innerHTML = '<span class="clock"></span>';
+    wrapper.querySelector(".meta").appendChild(pend);
+  } else if(opts.delivered){
+    const tick = document.createElement("span");
+    tick.className = "pending";
+    tick.title = "Delivered";
+    tick.innerHTML = '<span class="tick"></span>';
+    wrapper.querySelector(".meta").appendChild(tick);
+  }
+  chatsEl.appendChild(wrapper);
+  chatsEl.scrollTop = chatsEl.scrollHeight;
+}
+
+// escape to avoid html injection
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+// When user hits Send
+btnSend.onclick = sendMessage;
+txtMsg.addEventListener("keypress", (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+function sendMessage(){
+  const text = (txtMsg.value||"").trim();
+  if(!text) return;
+  const payload = makePayload(displayName, text);
+  // optimistic UI: render as pending locally
+  renderMessageLocally(payload, {pending:true});
+  txtMsg.value = "";
+  // try send immediately, else push to local queue
+  trySendToServer(payload)
+    .then(ok=>{
+      if(!ok){ pushToQueue(payload); console.log("Queued locally"); }
+    })
+    .catch(err=>{
+      console.warn("Send error:",err);
+      pushToQueue(payload);
+    });
+}
+
+// try to send once (returns Promise<boolean> if sent true else false)
+function trySendToServer(payload){
+  return new Promise((resolve, reject)=>{
+    // small size: we will push to the Realtime DB under a short node with push()
+    try {
+      const newRef = db.ref(CHAT_NODE).push();
+      newRef.set(payload, (err)=>{
+        if(err){ resolve(false); } else { resolve(true); }
+      });
+      // Also trim older messages occasionally to keep DB small (only last N)
+      // (non-atomic simple trim)
+      trimOldMessages();
+    } catch(e){
+      resolve(false);
+    }
+  });
+}
+
+// trim: keep only last MAX_MESSAGES (best-effort)
+let trimming = false;
+function trimOldMessages(){
+  if(trimming) return;
+  trimming = true;
+  const ref = db.ref(CHAT_NODE).orderByChild('t').limitToLast(MAX_MESSAGES);
+  ref.once('value', snap=>{
+    const keep = [];
+    snap.forEach(c => keep.push(c.key));
+    // delete others
+    db.ref(CHAT_NODE).once('value', allSnap=>{
+      allSnap.forEach(c=>{
+        if(!keep.includes(c.key)){
+          db.ref(CHAT_NODE + '/' + c.key).remove().catch(()=>{});
+        }
+      });
+      trimming = false;
+    }, ()=>{ trimming=false; });
+  }, ()=>{ trimming=false; });
+}
+
+// ---------- Queue flushing: try sending queued messages ----------
+let flushing = false;
+async function tryFlushQueue(){
+  if(flushing) return;
+  flushing = true;
+  const q = loadQueue();
+  if(q.length === 0){ flushing=false; return; }
+  if(!navigator.onLine){ flushing=false; return; }
+  // Try sending items one by one (preserve order)
+  for(let i=0;i<q.length;i++){
+    const item = q[i];
+    try{
+      const ok = await trySendToServer(item);
+      if(ok){
+        // remove first element
+        popFrontQueue();
+        // update UI: mark delivered (we don't track which DOM node corresponds to queue item; simplest: reload messages from server soon)
+        // small delay to allow realtime listener to show new delivered message from DB
+      } else {
+        // stop trying further if a send failed to avoid tight loops
+        break;
+      }
+    } catch(err){
+      break;
+    }
+  }
+  flushing = false;
+}
+
+// Periodic flush attempt
+setInterval(tryFlushQueue, 4000);
+
+// ---------- Realtime listening ----------
+let firstLoadDone = false;
+function initChatListeners(){
+  // Listen to last MAX_MESSAGES
+  const ref = db.ref(CHAT_NODE).orderByChild('t').limitToLast(MAX_MESSAGES);
+  ref.off(); // ensure not double
+  ref.on('child_added', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    // Render message — delivered state true
+    renderMessageLocally(val, {delivered:true});
+  });
+  // after initial hookup, also render any local unsent queued messages (so user sees them even if offline)
+  const q = loadQueue();
+  q.forEach(item => renderMessageLocally(item, {pending:true}));
+}
+
+// ---------- On page load: restore any previous displayName if any ----------
+(function restoreName(){
+  const prev = localStorage.getItem("litechat_name");
+  if(prev){ inputName.value = prev; }
+})();
+btnJoin.addEventListener("click", ()=>{ localStorage.setItem("litechat_name", inputName.value); });
+
+// ---------- Helpful: show queued count occasionally ----------
+setInterval(()=>{
+  const q=loadQueue();
+  if(q.length>0){
+    netStatusEl.textContent = (navigator.onLine ? "Online" : "Offline") + ` • ${q.length} unsent`;
+  } else {
+    updateNetworkUI();
+  }
+}, 1000);
+
+// ---------- On unload, save queue (already saved on push) ----------
+window.addEventListener("beforeunload", ()=>{ /* already persisted */ });
+
+/* Optional: If you want smaller messages, you can also add a tiny dictionary compression:
+   replace common words with single-char tokens before compressing. For brevity not included here.
+*/
+
+/* Firebase Realtime Database Rules (set in Firebase console during dev)
+
+Make sure to adapt rules for production (rate-limiting, length checks, profanity filters).
+*/
+
+</script>
 </body>
 </html>

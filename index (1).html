@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ultra Light Chat (Slow Network Friendly)</title>
+
+<!-- Basic styling (mobile friendly) -->
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#06b6d4; --muted:#94a3b8; --ok:#34d399;
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans",sans-serif;background:linear-gradient(180deg,#071023 0%,#071a2b 100%);color:#e6eef6}
+  .app{max-width:720px;margin:12px auto;padding:12px}
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .brand{font-weight:700;font-size:18px;color:var(--accent)}
+  .status{font-size:13px;color:var(--muted);margin-left:auto}
+  .card{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;box-shadow:0 6px 16px rgba(2,6,23,0.6)}
+  .chats{height:60vh; overflow:auto; padding:10px; display:flex;flex-direction:column; gap:8px; margin:10px 0;}
+  .msg{max-width:78%; padding:8px 10px;border-radius:10px;line-height:1.2; font-size:15px;}
+  .mine{align-self:flex-end;background:linear-gradient(180deg,#063b3f,#045c63); color:white;border-bottom-right-radius:2px}
+  .other{align-self:flex-start;background:rgba(255,255,255,0.03); color: #e6eef6}
+  .meta{font-size:11px;color:var(--muted);margin-top:4px}
+  .inputbar{display:flex;gap:8px;align-items:center}
+  input[type="text"],button{padding:10px;border-radius:10px;border:0;background:rgba(255,255,255,0.03);color:inherit;outline:none}
+  input[type="text"]{flex:1}
+  button{min-width:48px;cursor:pointer}
+  .small{font-size:12px;color:var(--muted)}
+  .pending{opacity:0.7;font-size:12px;margin-left:6px}
+  .clock{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid var(--muted);box-sizing:border-box}
+  .tick{display:inline-block;width:12px;height:12px;background:var(--ok);border-radius:2px}
+  .user-setup{display:flex;gap:8px;align-items:center; margin-bottom:10px}
+  .btn-link{background:transparent;color:var(--accent);border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px}
+  .hint{font-size:13px;color:var(--muted);margin-top:6px}
+  @media (max-width:420px){ .chats{height:56vh} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">⚡ LiteChat</div>
+    <div class="status" id="netStatus">Checking network...</div>
+  </div>
+
+  <div class="card">
+    <div id="setupArea" class="user-setup">
+      <input id="inputName" type="text" placeholder="Enter your name (displayed to others)" />
+      <button id="btnJoin" class="btn-link">Join Chat</button>
+      <div style="margin-left:auto"><button id="btnClearLocal" class="btn-link">Clear Local Queue</button></div>
+    </div>
+
+    <div id="chatArea" style="display:none">
+      <div class="chats" id="chats"></div>
+
+      <div class="inputbar">
+        <input id="txtMsg" type="text" placeholder="Type message (text only) — small payloads work best" />
+        <button id="btnSend">Send</button>
+      </div>
+      <div class="hint small">Optimized for slow networks. Messages queued locally when offline.</div>
+    </div>
+  </div>
+</div>
+
+<!-- External libs: Firebase (compat) + LZString for compression (optional small) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
+<script>
+/*
+  IMPORTANT:
+  Replace firebaseConfig below with your Firebase project's config object.
+  You can get it from Firebase Console -> Project Settings -> SDK setup.
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyA3yJFkZO0gu-oEto3z4ZeqwN-rHxVn9-4",
+  authDomain: "user-s-login-6260a.firebaseapp.com",
+  databaseURL: "https://user-s-login-6260a-default-rtdb.firebaseio.com",
+  projectId: "user-s-login-6260a",
+  storageBucket: "user-s-login-6260a.firebasestorage.app",
+  messagingSenderId: "896227638466",
+  appId: "1:896227638466:web:d5bbf34936682dd4a70f5b",
+  measurementId: "G-0HERWKBQ5Y"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+
+// ---------- App constants ----------
+const CHAT_NODE = "litechat/messages"; // keep it short to reduce bandwidth
+const MAX_MESSAGES = 100; // limit to last 100 messages to reduce data
+
+// ---------- Local queue (localStorage) ----------
+const QUEUE_KEY = "litechat_queue_v1";
+function loadQueue(){ try { return JSON.parse(localStorage.getItem(QUEUE_KEY)||"[]"); } catch(e){ return []; } }
+function saveQueue(q){ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+function pushToQueue(msgObj){ const q=loadQueue(); q.push(msgObj); saveQueue(q); }
+function popFrontQueue(){ const q=loadQueue(); if(q.length===0) return null; const first=q.shift(); saveQueue(q); return first; }
+function clearQueue(){ localStorage.removeItem(QUEUE_KEY); }
+
+// ---------- Network status ----------
+const netStatusEl = document.getElementById("netStatus");
+function updateNetworkUI(){
+  netStatusEl.textContent = navigator.onLine ? "Online" : "Offline";
+}
+window.addEventListener("online", () => { updateNetworkUI(); tryFlushQueue(); });
+window.addEventListener("offline", updateNetworkUI);
+updateNetworkUI();
+
+// ---------- UI refs ----------
+const setupArea = document.getElementById("setupArea");
+const chatArea = document.getElementById("chatArea");
+const inputName = document.getElementById("inputName");
+const btnJoin = document.getElementById("btnJoin");
+const btnClearLocal = document.getElementById("btnClearLocal");
+const chatsEl = document.getElementById("chats");
+const txtMsg = document.getElementById("txtMsg");
+const btnSend = document.getElementById("btnSend");
+
+// ---------- Utility: small payload + compress ----------
+function makePayload(name, text){
+  // short keys: t = ts, u = user, m = message
+  const payload = {
+    t: Date.now(),
+    u: name.slice(0,24), // cap length
+    m: LZString.compressToUTF16(text) // compress message to reduce bytes (works well for repetitive/long text)
+  };
+  return payload;
+}
+function decompressPayload(payload){
+  return {
+    t: payload.t,
+    u: payload.u,
+    m: (payload.m ? LZString.decompressFromUTF16(payload.m) : "")
+  };
+}
+
+// ---------- Auth & join ----------
+let currentUser = null;
+let displayName = "";
+
+btnJoin.onclick = async () => {
+  const name = (inputName.value||"").trim();
+  if(!name){ alert("Please enter a name"); inputName.focus(); return; }
+  displayName = name.slice(0,24);
+  // Sign in anonymously to use Firebase safely
+  try {
+    const result = await auth.signInAnonymously();
+    currentUser = result.user;
+    setupArea.style.display = "none";
+    chatArea.style.display = "block";
+    initChatListeners();
+    // Try flush queue immediately
+    tryFlushQueue();
+    // focus input
+    txtMsg.focus();
+  } catch(err){
+    console.error("Auth error:",err);
+    alert("Unable to sign in. Check Firebase config and network.");
+  }
+};
+
+// Clear local queue (dev helper)
+btnClearLocal.onclick = () => { if(confirm("Clear local unsent message queue?")){ clearQueue(); alert("Local queue cleared"); } };
+
+// ---------- Send message flow ----------
+function renderMessageLocally(obj, opts={}) {
+  // obj has t, u, m (compressed)
+  const d = decompressPayload(obj);
+  const isMine = (d.u === displayName);
+  const wrapper = document.createElement("div");
+  wrapper.className = "msg " + (isMine ? "mine" : "other");
+  wrapper.innerHTML = `<div>${escapeHtml(d.m)}</div>
+    <div class="meta">${d.u} • ${new Date(d.t).toLocaleTimeString()}</div>`;
+  if(opts.pending){
+    const pend = document.createElement("span");
+    pend.className = "pending";
+    pend.title = "Pending (will be delivered when network available)";
+    pend.innerHTML = '<span class="clock"></span>';
+    wrapper.querySelector(".meta").appendChild(pend);
+  } else if(opts.delivered){
+    const tick = document.createElement("span");
+    tick.className = "pending";
+    tick.title = "Delivered";
+    tick.innerHTML = '<span class="tick"></span>';
+    wrapper.querySelector(".meta").appendChild(tick);
+  }
+  chatsEl.appendChild(wrapper);
+  chatsEl.scrollTop = chatsEl.scrollHeight;
+}
+
+// escape to avoid html injection
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+
+// When user hits Send
+btnSend.onclick = sendMessage;
+txtMsg.addEventListener("keypress", (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+function sendMessage(){
+  const text = (txtMsg.value||"").trim();
+  if(!text) return;
+  const payload = makePayload(displayName, text);
+  // optimistic UI: render as pending locally
+  renderMessageLocally(payload, {pending:true});
+  txtMsg.value = "";
+  // try send immediately, else push to local queue
+  trySendToServer(payload)
+    .then(ok=>{
+      if(!ok){ pushToQueue(payload); console.log("Queued locally"); }
+    })
+    .catch(err=>{
+      console.warn("Send error:",err);
+      pushToQueue(payload);
+    });
+}
+
+// try to send once (returns Promise<boolean> if sent true else false)
+function trySendToServer(payload){
+  return new Promise((resolve, reject)=>{
+    // small size: we will push to the Realtime DB under a short node with push()
+    try {
+      const newRef = db.ref(CHAT_NODE).push();
+      newRef.set(payload, (err)=>{
+        if(err){ resolve(false); } else { resolve(true); }
+      });
+      // Also trim older messages occasionally to keep DB small (only last N)
+      // (non-atomic simple trim)
+      trimOldMessages();
+    } catch(e){
+      resolve(false);
+    }
+  });
+}
+
+// trim: keep only last MAX_MESSAGES (best-effort)
+let trimming = false;
+function trimOldMessages(){
+  if(trimming) return;
+  trimming = true;
+  const ref = db.ref(CHAT_NODE).orderByChild('t').limitToLast(MAX_MESSAGES);
+  ref.once('value', snap=>{
+    const keep = [];
+    snap.forEach(c => keep.push(c.key));
+    // delete others
+    db.ref(CHAT_NODE).once('value', allSnap=>{
+      allSnap.forEach(c=>{
+        if(!keep.includes(c.key)){
+          db.ref(CHAT_NODE + '/' + c.key).remove().catch(()=>{});
+        }
+      });
+      trimming = false;
+    }, ()=>{ trimming=false; });
+  }, ()=>{ trimming=false; });
+}
+
+// ---------- Queue flushing: try sending queued messages ----------
+let flushing = false;
+async function tryFlushQueue(){
+  if(flushing) return;
+  flushing = true;
+  const q = loadQueue();
+  if(q.length === 0){ flushing=false; return; }
+  if(!navigator.onLine){ flushing=false; return; }
+  // Try sending items one by one (preserve order)
+  for(let i=0;i<q.length;i++){
+    const item = q[i];
+    try{
+      const ok = await trySendToServer(item);
+      if(ok){
+        // remove first element
+        popFrontQueue();
+        // update UI: mark delivered (we don't track which DOM node corresponds to queue item; simplest: reload messages from server soon)
+        // small delay to allow realtime listener to show new delivered message from DB
+      } else {
+        // stop trying further if a send failed to avoid tight loops
+        break;
+      }
+    } catch(err){
+      break;
+    }
+  }
+  flushing = false;
+}
+
+// Periodic flush attempt
+setInterval(tryFlushQueue, 4000);
+
+// ---------- Realtime listening ----------
+let firstLoadDone = false;
+function initChatListeners(){
+  // Listen to last MAX_MESSAGES
+  const ref = db.ref(CHAT_NODE).orderByChild('t').limitToLast(MAX_MESSAGES);
+  ref.off(); // ensure not double
+  ref.on('child_added', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    // Render message — delivered state true
+    renderMessageLocally(val, {delivered:true});
+  });
+  // after initial hookup, also render any local unsent queued messages (so user sees them even if offline)
+  const q = loadQueue();
+  q.forEach(item => renderMessageLocally(item, {pending:true}));
+}
+
+// ---------- On page load: restore any previous displayName if any ----------
+(function restoreName(){
+  const prev = localStorage.getItem("litechat_name");
+  if(prev){ inputName.value = prev; }
+})();
+btnJoin.addEventListener("click", ()=>{ localStorage.setItem("litechat_name", inputName.value); });
+
+// ---------- Helpful: show queued count occasionally ----------
+setInterval(()=>{
+  const q=loadQueue();
+  if(q.length>0){
+    netStatusEl.textContent = (navigator.onLine ? "Online" : "Offline") + ` • ${q.length} unsent`;
+  } else {
+    updateNetworkUI();
+  }
+}, 1000);
+
+// ---------- On unload, save queue (already saved on push) ----------
+window.addEventListener("beforeunload", ()=>{ /* already persisted */ });
+
+/* Optional: If you want smaller messages, you can also add a tiny dictionary compression:
+   replace common words with single-char tokens before compressing. For brevity not included here.
+*/
+
+/* Firebase Realtime Database Rules (set in Firebase console during dev)
+
+Make sure to adapt rules for production (rate-limiting, length checks, profanity filters).
+*/
+
+</script>
+</body>
+</html>
